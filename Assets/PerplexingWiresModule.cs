@@ -288,10 +288,10 @@ public class PerplexingWiresModule : MonoBehaviour
             // Generate the meshes for this wire.
             var seed = Rnd.Range(0, int.MaxValue);
             var mesh = MeshGenerator.GenerateWire(
-                topConnector.position,
-                topControl.position,
-                bottomControl.position,
-                bottomConnector.position,
+                transform.InverseTransformPoint(topConnector.position),
+                transform.InverseTransformPoint(topControl.position),
+                transform.InverseTransformPoint(bottomControl.position),
+                transform.InverseTransformPoint(bottomConnector.position),
                 5,
                 MeshGenerator.WirePiece.Uncut,
                 MeshGenerator.Mode.Wire,
@@ -302,30 +302,30 @@ public class PerplexingWiresModule : MonoBehaviour
             wireObj.GetComponent<MeshRenderer>().material = WireMaterials[(int) _wires[wIx].Color];
 
             _wires[wIx].CutMesh = MeshGenerator.GenerateWire(
-                topConnector.position,
-                topControl.position,
-                bottomControl.position,
-                bottomConnector.position,
+                transform.InverseTransformPoint(topConnector.position),
+                transform.InverseTransformPoint(topControl.position),
+                transform.InverseTransformPoint(bottomControl.position),
+                transform.InverseTransformPoint(bottomConnector.position),
                 5,
                 MeshGenerator.WirePiece.Cut,
                 MeshGenerator.Mode.Wire,
                 seed,
                 raiseBy);
             _wires[wIx].CutHighlightMesh = MeshGenerator.GenerateWire(
-                topConnector.position,
-                topControl.position,
-                bottomControl.position,
-                bottomConnector.position,
+                transform.InverseTransformPoint(topConnector.position),
+                transform.InverseTransformPoint(topControl.position),
+                transform.InverseTransformPoint(bottomControl.position),
+                transform.InverseTransformPoint(bottomConnector.position),
                 5,
                 MeshGenerator.WirePiece.Cut,
                 MeshGenerator.Mode.Highlight,
                 seed,
                 raiseBy);
             _wires[wIx].CopperMesh = MeshGenerator.GenerateWire(
-                topConnector.position,
-                topControl.position,
-                bottomControl.position,
-                bottomConnector.position,
+                transform.InverseTransformPoint(topConnector.position),
+                transform.InverseTransformPoint(topControl.position),
+                transform.InverseTransformPoint(bottomControl.position),
+                transform.InverseTransformPoint(bottomConnector.position),
                 5,
                 MeshGenerator.WirePiece.Copper,
                 MeshGenerator.Mode.Wire,
@@ -333,10 +333,10 @@ public class PerplexingWiresModule : MonoBehaviour
                 raiseBy);
 
             var highlightMesh = MeshGenerator.GenerateWire(
-                topConnector.position,
-                topControl.position,
-                bottomControl.position,
-                bottomConnector.position,
+                transform.InverseTransformPoint(topConnector.position),
+                transform.InverseTransformPoint(topControl.position),
+                transform.InverseTransformPoint(bottomControl.position),
+                transform.InverseTransformPoint(bottomConnector.position),
                 5,
                 MeshGenerator.WirePiece.Uncut,
                 MeshGenerator.Mode.Highlight,
@@ -353,10 +353,10 @@ public class PerplexingWiresModule : MonoBehaviour
             }
 
             wireObj.GetComponent<MeshCollider>().sharedMesh = MeshGenerator.GenerateWire(
-                topConnector.position,
-                topControl.position,
-                bottomControl.position,
-                bottomConnector.position,
+                transform.InverseTransformPoint(topConnector.position),
+                transform.InverseTransformPoint(topControl.position),
+                transform.InverseTransformPoint(bottomControl.position),
+                transform.InverseTransformPoint(bottomConnector.position),
                 5,
                 MeshGenerator.WirePiece.Uncut,
                 MeshGenerator.Mode.Collider,
@@ -366,9 +366,6 @@ public class PerplexingWiresModule : MonoBehaviour
             Debug.LogFormat("[Perplexing Wires #{6}] Wire {0} to {1} is {2}: {3} (Venn: {4})", _wires[wIx].TopConnector + 1, _wires[wIx].BottomConnector + 1, _wires[wIx].Color, cutRuleStr(_wires[wIx].CutRule), _wires[wIx].Reason, _wires[wIx].Level, _moduleId);
             _wires[wIx].Selectable = wireObj.GetComponent<KMSelectable>();
             _wires[wIx].Selectable.OnInteract = getWireHandler(wIx);
-            wireObj.transform.position = new Vector3(0, 0, 0);
-            wireObj.transform.eulerAngles = new Vector3(0, 0, 0);
-            wireObj.transform.localScale = new Vector3(1, 1, 1);
         }
 
         // Finally, get rid of the extra Wire objects that only exist to hold the colored materials.
