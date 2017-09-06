@@ -27,7 +27,7 @@ namespace PerplexingWires
         public enum WirePiece { Uncut, Cut, Copper }
         public enum Mode { Wire, Highlight, Collider }
 
-        public static Mesh GenerateWire(Pt start, Pt startControl, Pt endControl, Pt end, int numSegments, WirePiece piece, Mode mode, int seed, double raiseFactor)
+        public static Mesh GenerateWire(Pt start, Pt startControl, Pt endControl, Pt end, int numSegments, WirePiece piece, Mode mode, int seed, Pt raiseBy)
         {
             const int bézierSteps = 16;
             var tubeRevSteps = mode == Mode.Collider ? 4 : 16;
@@ -35,13 +35,14 @@ namespace PerplexingWires
             var rnd = new Rnd(seed);
             var thickness = mode == Mode.Highlight ? _wireRadiusHighlight : _wireRadius;
 
-            var raise = ((startControl - start) + (endControl - end)) * raiseFactor;
-            var interpolatedPoints = Ut.NewArray<Pt>(numSegments - 1, i => raise + startControl + (endControl - startControl) * (i + 1) / numSegments);
+            var iStart = startControl * .8 + endControl * .2;
+            var iEnd = startControl * .2 + endControl * .8;
+            var interpolatedPoints = Ut.NewArray<Pt>(numSegments - 1, i => raiseBy + iStart + (iEnd - iStart) * i / (numSegments - 2));
             var controlPointsB = Ut.NewArray<Pt>(numSegments - 1, i =>
             {
                 var p1 = interpolatedPoints[i];
                 var p2 = i == numSegments - 2 ? endControl : interpolatedPoints[i + 1];
-                var v = (p2 - p1).Normalize() * p1.Distance(p2) * .4;
+                var v = (p2 - p1).Normalize() * p1.Distance(p2) * .25;
                 var dummy = v.X > .5 ? new Pt(0, 1, 0) : new Pt(1, 0, 0);
                 var perpendicular = dummy * v;
                 v = (p1 + v).Rotate(p1, p1 + perpendicular, 45 * rnd.NextDouble());
@@ -98,9 +99,9 @@ namespace PerplexingWires
                 }
             });
 
-            var cutOffEarly = rnd.Next(2) == 0;
+            var cutOffEarly = false;// rnd.Next(2) == 0;
             var angleForward = rnd.Next(2) == 0;
-            var rotAngle = (rnd.NextDouble() * 20 + 10) * (angleForward ? -1 : 1);
+            var rotAngle = (rnd.NextDouble() * 10 + 1) * (angleForward ? -1 : 1);
             var rotAxisStart = start;
             var rotAxisEnd = startControl;
             Func<Pt, Pt> rot = p => p.Rotate(rotAxisStart, rotAxisEnd, rotAngle);
@@ -110,7 +111,7 @@ namespace PerplexingWires
             var bcTube = partialWire(beforeCut);
 
             var cutOffPoint = (cutOffEarly ? numSegments - 2 : numSegments - 1) / 2;
-            rotAngle = (rnd.NextDouble() * 20 + 10) * (angleForward ? -1 : 1);
+            rotAngle = (rnd.NextDouble() * 10 + 1) * (angleForward ? -1 : 1);
             rotAxisStart = end;
             rotAxisEnd = endControl;
             var afterCut =
