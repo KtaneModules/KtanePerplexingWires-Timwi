@@ -20,6 +20,7 @@ public class PerplexingWiresModule : MonoBehaviour
     public Texture[] Arrows;
     public Texture[] Stars;
     public Material[] LedMaterials;
+    public Material[] WireMaterials;
 
     public MeshRenderer[] ArrowMeshes;
     public MeshRenderer[] StarMeshes;
@@ -42,7 +43,7 @@ public class PerplexingWiresModule : MonoBehaviour
         ColorMask = 7 << 2
     }
 
-    [Flags] enum Color { Red, Yellow, Blue, White, Green, Orange, Purple, Black }
+    [Flags] enum WireColor { Red, Yellow, Blue, White, Green, Orange, Purple, Black }
 
     private Arrow[] _arrows;
     private bool[] _filledStars;
@@ -54,7 +55,7 @@ public class PerplexingWiresModule : MonoBehaviour
     {
         public int TopConnector;
         public int BottomConnector;
-        public Color Color;
+        public WireColor Color;
         public int Level;
         public CutRule MustBeCut;
         public bool HasBeenCut;
@@ -110,7 +111,7 @@ public class PerplexingWiresModule : MonoBehaviour
             {
                 TopConnector = i < 4 ? i : Rnd.Range(0, 4),
                 BottomConnector = shuffledBottom[i],
-                Color = (Color) Rnd.Range(0, 8),
+                Color = (WireColor) Rnd.Range(0, 8),
                 Level = 1,
                 HasBeenCut = false
             };
@@ -124,7 +125,7 @@ public class PerplexingWiresModule : MonoBehaviour
         // STEP 3: Determine the solution. Make sure that at least one wire needs to be cut.
         //
         const string rules = "LWIPMVIFIUCCFRHHTVUDLRJBQWBDJTQD";
-        var colorsForRedRule = new[] { Color.Red, Color.Yellow, Color.Blue, Color.White };
+        var colorsForRedRule = new[] { WireColor.Red, WireColor.Yellow, WireColor.Blue, WireColor.White };
         for (int i = 0; i < 6; i++)
         {
             var rule = 0;
@@ -141,11 +142,11 @@ public class PerplexingWiresModule : MonoBehaviour
             if (colorsForRedRule.Contains(_wires[i].Color))
                 rule += 8;
             // Orange: The wire shares the same color as its arrow.
-            if ((_wires[i].Color == Color.Red && (_arrows[_wires[i].BottomConnector] & Arrow.ColorMask) == Arrow.Red) ||
-                (_wires[i].Color == Color.Green && (_arrows[_wires[i].BottomConnector] & Arrow.ColorMask) == Arrow.Green) ||
-                (_wires[i].Color == Color.Blue && (_arrows[_wires[i].BottomConnector] & Arrow.ColorMask) == Arrow.Blue) ||
-                (_wires[i].Color == Color.Yellow && (_arrows[_wires[i].BottomConnector] & Arrow.ColorMask) == Arrow.Yellow) ||
-                (_wires[i].Color == Color.Purple && (_arrows[_wires[i].BottomConnector] & Arrow.ColorMask) == Arrow.Purple))
+            if ((_wires[i].Color == WireColor.Red && (_arrows[_wires[i].BottomConnector] & Arrow.ColorMask) == Arrow.Red) ||
+                (_wires[i].Color == WireColor.Green && (_arrows[_wires[i].BottomConnector] & Arrow.ColorMask) == Arrow.Green) ||
+                (_wires[i].Color == WireColor.Blue && (_arrows[_wires[i].BottomConnector] & Arrow.ColorMask) == Arrow.Blue) ||
+                (_wires[i].Color == WireColor.Yellow && (_arrows[_wires[i].BottomConnector] & Arrow.ColorMask) == Arrow.Yellow) ||
+                (_wires[i].Color == WireColor.Purple && (_arrows[_wires[i].BottomConnector] & Arrow.ColorMask) == Arrow.Purple))
                 rule += 16;
 
             var dir = (_arrows[_wires[i].BottomConnector] & Arrow.DirectionMask);
@@ -176,7 +177,7 @@ public class PerplexingWiresModule : MonoBehaviour
                 // Q: Cut the wire if the color of the wire is unique.
                 case 'Q': _wires[i].MustBeCut = _wires.Where((w, ix) => ix != i).Any(w => w.Color == _wires[i].Color) ? CutRule.DontCut : CutRule.Cut; break;
                 // J: Cut the wire if, at the bottom, it is adjacent to an orange or purple wire.
-                case 'J': _wires[i].MustBeCut = _wires.Any(w => (w.BottomConnector == _wires[i].BottomConnector - 1 || w.BottomConnector == _wires[i].BottomConnector + 1) && (w.Color == Color.Orange || w.Color == Color.Purple)) ? CutRule.Cut : CutRule.DontCut; break;
+                case 'J': _wires[i].MustBeCut = _wires.Any(w => (w.BottomConnector == _wires[i].BottomConnector - 1 || w.BottomConnector == _wires[i].BottomConnector + 1) && (w.Color == WireColor.Orange || w.Color == WireColor.Purple)) ? CutRule.Cut : CutRule.DontCut; break;
                 // V: Cut the wire if the serial number has a vowel, or if the bomb has a USB port.
                 case 'V': _wires[i].MustBeCut = Bomb.GetSerialNumberLetters().Any(ch => "AEIOU".Contains(ch)) || Bomb.GetPortCount("USB") > 0 ? CutRule.Cut : CutRule.DontCut; break;
                 // R: Cut the wire if its arrow direction is unique.
@@ -191,12 +192,14 @@ public class PerplexingWiresModule : MonoBehaviour
         //
         // STEP 4: Generate the actual wire meshes.
         //
-        var wireOrig = Module.transform.FindChild("Wire").gameObject;
-        foreach (var wire in _wires)
+        var wiresParent = Module.transform.FindChild("Wires");
+        for (int wIx = 0; wIx < _wires.Length; wIx++)
         {
-            var topConnector = Module.transform.FindChild("Strip2").FindChild("Connector" + (wire.TopConnector + 1));
-            var bottomConnector = Module.transform.FindChild("Strip1").FindChild("Connector" + (wire.BottomConnector + 1));
+            var wireObj = wiresParent.FindChild("Wire" + (wIx + 1)).gameObject;
+            var topConnector = Module.transform.FindChild("Strip2").FindChild("Connector" + (_wires[wIx].TopConnector + 1));
+            var bottomConnector = Module.transform.FindChild("Strip1").FindChild("Connector" + (_wires[wIx].BottomConnector + 1));
             var seed = Rnd.Range(0, int.MaxValue);
+            var raiseFactor = 1.0 * _wires[wIx].Level;
             var mesh = MeshGenerator.GenerateWire(
                 topConnector.position,
                 topConnector.FindChild("Control").position,
@@ -204,12 +207,11 @@ public class PerplexingWiresModule : MonoBehaviour
                 bottomConnector.position,
                 3,
                 MeshGenerator.WirePiece.Uncut,
-                highlight: false,
+                mode: MeshGenerator.Mode.Wire,
                 seed: seed,
-                raiseFactor: .75 * wire.Level);
-            var wireObj = Instantiate(wireOrig);
+                raiseFactor: raiseFactor);
             wireObj.GetComponent<MeshFilter>().mesh = mesh;
-            wireObj.transform.parent = Module.transform;
+            wireObj.GetComponent<MeshRenderer>().material = WireMaterials[(int) _wires[wIx].Color];
 
             var highlightMesh = MeshGenerator.GenerateWire(
                 topConnector.position,
@@ -218,14 +220,36 @@ public class PerplexingWiresModule : MonoBehaviour
                 bottomConnector.position,
                 3,
                 MeshGenerator.WirePiece.Uncut,
-                highlight: true,
+                mode: MeshGenerator.Mode.Highlight,
                 seed: seed,
-                raiseFactor: .75 * (wire.Level - 1));
+                raiseFactor: raiseFactor);
             var highlight = wireObj.transform.FindChild("Highlight");
-            //highlight.GetComponent<MeshFilter>().mesh = highlightMesh;
+            highlight.GetComponent<MeshFilter>().mesh = highlightMesh;
+            var highlight2 = highlight.FindChild("Highlight(Clone)");
+            if (highlight2 != null)
+                highlight2.GetComponent<MeshFilter>().mesh = highlightMesh;
 
-            Debug.LogFormat("Wire ({0} to {1}) Level {3}: {2}", wire.TopConnector, wire.BottomConnector, wire.MustBeCut, wire.Level);
+            wireObj.GetComponent<MeshCollider>().sharedMesh = MeshGenerator.GenerateWire(
+                topConnector.position,
+                topConnector.FindChild("Control").position,
+                bottomConnector.FindChild("Control").position,
+                bottomConnector.position,
+                3,
+                MeshGenerator.WirePiece.Uncut,
+                mode: MeshGenerator.Mode.Collider,
+                seed: seed,
+                raiseFactor: raiseFactor);
+
+            Debug.LogFormat("Wire ({0} to {1}) {3}: {2}", _wires[wIx].TopConnector, _wires[wIx].BottomConnector, _wires[wIx].MustBeCut, _wires[wIx].Color);
         }
-        Destroy(wireOrig);
+        var dwIx = _wires.Length;
+        while (true)
+        {
+            var wireObj = wiresParent.FindChild("Wire" + (dwIx + 1));
+            if (wireObj == null)
+                break;
+            Destroy(wireObj.gameObject);
+            dwIx++;
+        }
     }
 }

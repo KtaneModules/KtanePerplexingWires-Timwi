@@ -25,14 +25,15 @@ namespace PerplexingWires
         sealed class CPC { public Pt ControlBefore, Point, ControlAfter; }
 
         public enum WirePiece { Uncut, Cut, Copper }
+        public enum Mode { Wire, Highlight, Collider }
 
-        public static Mesh GenerateWire(Pt start, Pt startControl, Pt endControl, Pt end, int numSegments, WirePiece piece, bool highlight, int seed, double raiseFactor)
+        public static Mesh GenerateWire(Pt start, Pt startControl, Pt endControl, Pt end, int numSegments, WirePiece piece, Mode mode, int seed, double raiseFactor)
         {
             const int bézierSteps = 16;
-            const int tubeRevSteps = 16;
+            var tubeRevSteps = mode == Mode.Collider ? 4 : 16;
 
             var rnd = new Rnd(seed);
-            var thickness = highlight ? _wireRadiusHighlight : _wireRadius;
+            var thickness = mode == Mode.Highlight ? _wireRadiusHighlight : _wireRadius;
 
             var raise = ((startControl - start) + (endControl - end)) * raiseFactor;
             var interpolatedPoints = Ut.NewArray<Pt>(numSegments - 1, i => raise + startControl + (endControl - startControl) * (i + 1) / numSegments);
@@ -51,15 +52,22 @@ namespace PerplexingWires
 
             if (piece == WirePiece.Uncut)
             {
-                var points =
-                    new[] { new { ControlBefore = default(Pt), Point = start, ControlAfter = startControl } }
-                    .Concat(interpolatedPoints.Select((p, i) => new { ControlBefore = controlPointsA[i], Point = p, ControlAfter = controlPointsB[i] }))
-                    .Concat(new[] { new { ControlBefore = endControl, Point = end, ControlAfter = default(Pt) } })
-                    .SelectConsecutivePairs(false, (one, two) => bézier(one.Point, one.ControlAfter, two.ControlBefore, two.Point, bézierSteps))
-                    .SelectMany((x, i) => i == 0 ? x : x.Skip(1))
-                    .ToArray();
-                return toMesh(createFaces(false, true, tubeFromCurve(points, thickness, tubeRevSteps)));
-                //return toMesh(createFaces(false, true, tubeFromCurve(new[] { start, startControl }.Concat(interpolatedPoints.SelectMany((p, ix) => new[] { controlPointsA[ix], p, controlPointsB[ix] })).Concat(new[] { endControl, end }).ToArray(), thickness, tubeRevSteps)));
+                if (mode == Mode.Collider)
+                {
+                    var points = new[] { start, startControl }.Concat(interpolatedPoints).Concat(new[] { endControl, end }).ToArray();
+                    return toMesh(createFaces(false, true, tubeFromCurve(points, thickness, tubeRevSteps)));
+                }
+                else
+                {
+                    var points =
+                        new[] { new { ControlBefore = default(Pt), Point = start, ControlAfter = startControl } }
+                        .Concat(interpolatedPoints.Select((p, i) => new { ControlBefore = controlPointsA[i], Point = p, ControlAfter = controlPointsB[i] }))
+                        .Concat(new[] { new { ControlBefore = endControl, Point = end, ControlAfter = default(Pt) } })
+                        .SelectConsecutivePairs(false, (one, two) => bézier(one.Point, one.ControlAfter, two.ControlBefore, two.Point, bézierSteps))
+                        .SelectMany((x, i) => i == 0 ? x : x.Skip(1))
+                        .ToArray();
+                    return toMesh(createFaces(false, true, tubeFromCurve(points, thickness, tubeRevSteps)));
+                }
             }
 
             var partialWire = new Func<IEnumerable<CPC>, IEnumerable<VertexInfo[]>>(pts =>
