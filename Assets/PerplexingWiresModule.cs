@@ -270,7 +270,7 @@ public class PerplexingWiresModule : MonoBehaviour
             topControl.localPosition = new Vector3(0, .2f, 0);
             var bottomConnector = Module.transform.FindChild("Strip1").FindChild("Connector" + (_wires[wIx].BottomConnector + 1));
             var bottomControl = bottomConnector.FindChild("Control");
-            var raiseBy = 1.5 * (_wires[wIx].Level - 1) * (Pt) (bottomControl.position - bottomConnector.position + topControl.position - topConnector.position);
+            var raiseBy = 1.5 * (_wires[wIx].Level - 1) * (Pt) (transform.InverseTransformPoint(bottomControl.position) - transform.InverseTransformPoint(bottomConnector.position) + transform.InverseTransformPoint(topControl.position) - transform.InverseTransformPoint(topConnector.position));
 
             // Slightly move the control point at the top connector to mitigate the incidence of wire collisions.
             var topControlX = 0f;
