@@ -33,7 +33,7 @@ namespace PerplexingWires
             var tubeRevSteps = mode == Mode.Collider ? 4 : 16;
 
             var rnd = new Rnd(seed);
-            var thickness = mode == Mode.Highlight ? _wireRadiusHighlight : _wireRadius;
+            var thickness = mode != Mode.Wire ? _wireRadiusHighlight : _wireRadius;
 
             var iStart = startControl * .8 + endControl * .2;
             var iEnd = startControl * .2 + endControl * .8;
