@@ -363,6 +363,10 @@ public class PerplexingWiresModule : MonoBehaviour
                 seed,
                 raiseBy);
 
+            // Fix for a possible bug in Unity
+            wireObj.GetComponent<MeshCollider>().enabled = true;
+            wireObj.GetComponent<MeshCollider>().enabled = false;
+
             Debug.LogFormat("[Perplexing Wires #{6}] Wire {0} to {1} is {2}: {3} (Venn: {4})", _wires[wIx].TopConnector + 1, _wires[wIx].BottomConnector + 1, _wires[wIx].Color, cutRuleStr(_wires[wIx].CutRule), _wires[wIx].Reason, _wires[wIx].Level, _moduleId);
             _wires[wIx].Selectable = wireObj.GetComponent<KMSelectable>();
             _wires[wIx].Selectable.OnInteract = getWireHandler(wIx);
