@@ -430,4 +430,21 @@ public class PerplexingWiresModule : MonoBehaviour
             return false;
         };
     }
+
+    private string TwitchHelpMessage = "Cut the wires with !{0} cut 2 3 1.";
+    private KMSelectable[] ProcessTwitchCommand(string command)
+    {
+        var split = command.ToLowerInvariant().Split(new[] {" "}, StringSplitOptions.RemoveEmptyEntries);
+        if (split.Length < 2 || split[0] != "cut")
+            return null;
+        var wires = new List<KMSelectable>();
+        foreach (var wire in split.Skip(1))
+        {
+            int result;
+            if (!int.TryParse(wire, out result) || result < 1 || result > 6)
+                return null;
+            wires.Add(_wires[result-1].Selectable);
+        }
+        return wires.ToArray();
+    }
 }
