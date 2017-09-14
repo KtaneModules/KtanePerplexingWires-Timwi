@@ -431,10 +431,10 @@ public class PerplexingWiresModule : MonoBehaviour
         };
     }
 
-    private string TwitchHelpMessage = "Cut the wires with !{0} cut 2 3 1.";
+    public string TwitchHelpMessage = "Cut the wires with !{0} cut 2 3 1. The wires are numbered according to their connection on the bottom.";
     private KMSelectable[] ProcessTwitchCommand(string command)
     {
-        var split = command.ToLowerInvariant().Split(new[] {" "}, StringSplitOptions.RemoveEmptyEntries);
+        var split = command.ToLowerInvariant().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
         if (split.Length < 2 || split[0] != "cut")
             return null;
         var wires = new List<KMSelectable>();
@@ -443,7 +443,7 @@ public class PerplexingWiresModule : MonoBehaviour
             int result;
             if (!int.TryParse(wire, out result) || result < 1 || result > 6)
                 return null;
-            wires.Add(_wires[result-1].Selectable);
+            wires.Add(_wires[result - 1].Selectable);
         }
         return wires.ToArray();
     }
