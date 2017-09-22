@@ -167,11 +167,23 @@ public class PerplexingWiresModule : MonoBehaviour
         {
             var applicable = new List<string>();
             var rule = 0;
-            // Blue: The wire crosses over another wire.
-            if (_wires.Any(w => (w.BottomConnector > _wires[i].BottomConnector && w.TopConnector < _wires[i].TopConnector) || (w.BottomConnector < _wires[i].BottomConnector && w.TopConnector > _wires[i].TopConnector)))
+            var arrowColor = _arrows[_wires[i].BottomConnector] & Arrow.ColorMask;
+
+            // Red: The wire is red, yellow, blue, or white.
+            if (colorsForRedRule.Contains(_wires[i].Color))
             {
-                rule += 1;
-                applicable.Add("Blue");
+                rule += 8;
+                applicable.Add("Red");
+            }
+            // Orange: The wire shares the same color as its arrow.
+            if ((_wires[i].Color == WireColor.Red && arrowColor == Arrow.Red) ||
+                (_wires[i].Color == WireColor.Green && arrowColor == Arrow.Green) ||
+                (_wires[i].Color == WireColor.Blue && arrowColor == Arrow.Blue) ||
+                (_wires[i].Color == WireColor.Yellow && arrowColor == Arrow.Yellow) ||
+                (_wires[i].Color == WireColor.Purple && arrowColor == Arrow.Purple))
+            {
+                rule += 16;
+                applicable.Add("Orange");
             }
             // Yellow: The wire’s star is black.
             if (_filledStars[_wires[i].TopConnector])
@@ -185,22 +197,11 @@ public class PerplexingWiresModule : MonoBehaviour
                 rule += 4;
                 applicable.Add("Green");
             }
-            // Red: The wire is red, yellow, blue, or white.
-            if (colorsForRedRule.Contains(_wires[i].Color))
+            // Blue: The wire crosses over another wire.
+            if (_wires.Any(w => (w.BottomConnector > _wires[i].BottomConnector && w.TopConnector < _wires[i].TopConnector) || (w.BottomConnector < _wires[i].BottomConnector && w.TopConnector > _wires[i].TopConnector)))
             {
-                rule += 8;
-                applicable.Add("Red");
-            }
-            var arrowColor = _arrows[_wires[i].BottomConnector] & Arrow.ColorMask;
-            // Orange: The wire shares the same color as its arrow.
-            if ((_wires[i].Color == WireColor.Red && arrowColor == Arrow.Red) ||
-                (_wires[i].Color == WireColor.Green && arrowColor == Arrow.Green) ||
-                (_wires[i].Color == WireColor.Blue && arrowColor == Arrow.Blue) ||
-                (_wires[i].Color == WireColor.Yellow && arrowColor == Arrow.Yellow) ||
-                (_wires[i].Color == WireColor.Purple && arrowColor == Arrow.Purple))
-            {
-                rule += 16;
-                applicable.Add("Orange");
+                rule += 1;
+                applicable.Add("Blue");
             }
 
             _wires[i].Reason = string.Format("{0} = {1}", applicable.Count == 0 ? "none" : applicable.JoinString("+"), rules[rule]);
