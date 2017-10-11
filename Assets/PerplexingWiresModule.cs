@@ -161,7 +161,7 @@ public class PerplexingWiresModule : MonoBehaviour
         //
         // STEP 3: Determine the solution. Make sure that at least one wire needs to be cut.
         //
-        const string rules = "LWIPMVIFIUCCFRHHTVUDLRJBQWBDJTQD";
+        const string rules = "LWIPMVIFIUCCFRHHTVUDLRJBQWBPJTQD";
         var colorsForRedRule = new[] { WireColor.Red, WireColor.Yellow, WireColor.Blue, WireColor.White };
         for (int i = 0; i < 6; i++)
         {
