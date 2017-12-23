@@ -260,17 +260,17 @@ public class PerplexingWiresModule : MonoBehaviour
         //
         // STEP 4: Generate the actual wire meshes. (This also logs the wire states and rules.)
         //
-        var wiresParent = Module.transform.FindChild("Wires");
+        var wiresParent = Module.transform.Find("Wires");
         for (int wIx = 0; wIx < _wires.Length; wIx++)
         {
-            var wireObj = wiresParent.FindChild("Wire" + (wIx + 1)).gameObject;
+            var wireObj = wiresParent.Find("Wire" + (wIx + 1)).gameObject;
 
             // Determine the “original” control points and raise height.
-            var topConnector = Module.transform.FindChild("Strip2").FindChild("Connector" + (_wires[wIx].TopConnector + 1));
-            var topControl = topConnector.FindChild("Control");
+            var topConnector = Module.transform.Find("Strip2").Find("Connector" + (_wires[wIx].TopConnector + 1));
+            var topControl = topConnector.Find("Control");
             topControl.localPosition = new Vector3(0, .2f, 0);
-            var bottomConnector = Module.transform.FindChild("Strip1").FindChild("Connector" + (_wires[wIx].BottomConnector + 1));
-            var bottomControl = bottomConnector.FindChild("Control");
+            var bottomConnector = Module.transform.Find("Strip1").Find("Connector" + (_wires[wIx].BottomConnector + 1));
+            var bottomControl = bottomConnector.Find("Control");
             var raiseBy = 1.5 * (_wires[wIx].Level - 1) * (Pt) (transform.InverseTransformPoint(bottomControl.position) - transform.InverseTransformPoint(bottomConnector.position) + transform.InverseTransformPoint(topControl.position) - transform.InverseTransformPoint(topConnector.position));
 
             // Slightly move the control point at the top connector to mitigate the incidence of wire collisions.
@@ -343,10 +343,10 @@ public class PerplexingWiresModule : MonoBehaviour
                 MeshGenerator.Mode.Highlight,
                 seed,
                 raiseBy);
-            var highlight = wireObj.transform.FindChild("Highlight");
+            var highlight = wireObj.transform.Find("Highlight");
             _wires[wIx].HighlightMeshFilter = highlight.GetComponent<MeshFilter>();
             _wires[wIx].HighlightMeshFilter.mesh = highlightMesh;
-            var highlight2 = highlight.FindChild("Highlight(Clone)");
+            var highlight2 = highlight.Find("Highlight(Clone)");
             if (highlight2 != null)
             {
                 _wires[wIx].HighlightMeshFilter = highlight2.GetComponent<MeshFilter>();
@@ -377,7 +377,7 @@ public class PerplexingWiresModule : MonoBehaviour
         var dwIx = _wires.Length;
         while (true)
         {
-            var wireObj = wiresParent.FindChild("Wire" + (dwIx + 1));
+            var wireObj = wiresParent.Find("Wire" + (dwIx + 1));
             if (wireObj == null)
                 break;
             Destroy(wireObj.gameObject);
@@ -385,7 +385,7 @@ public class PerplexingWiresModule : MonoBehaviour
         }
 
         // Object that will be cloned to create the wire copper when a wire is cut.
-        _wireCopper = wiresParent.FindChild("WireCopper").gameObject;
+        _wireCopper = wiresParent.Find("WireCopper").gameObject;
         _wireCopper.SetActive(false);
 
         MainSelectable.Children = _wires.Select(w => w.Selectable).ToArray();
