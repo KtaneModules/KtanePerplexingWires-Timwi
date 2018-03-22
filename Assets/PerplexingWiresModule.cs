@@ -433,7 +433,7 @@ public class PerplexingWiresModule : MonoBehaviour
     }
 
 #pragma warning disable 414
-    private string TwitchHelpMessage = "Cut the wires with !{0} cut 2 3 1. The wires are numbered according to their connection on the bottom.";
+    private string TwitchHelpMessage = "Cut the wires with “!{0} cut 2 3 1”. The wires are numbered according to their connection on the bottom.";
 #pragma warning restore 414
 
     private KMSelectable[] ProcessTwitchCommand(string command)
