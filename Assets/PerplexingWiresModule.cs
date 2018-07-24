@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using PerplexingWires;
 using UnityEngine;
 
@@ -51,6 +52,33 @@ public class PerplexingWiresModule : MonoBehaviour
             return "Red";
         return color.ToString();
     }
+    private static string colorSvg(Arrow arrow)
+    {
+        switch (arrow & Arrow.ColorMask)
+        {
+            case Arrow.Red: return "#ed2121";
+            case Arrow.Green: return "#19da3a";
+            case Arrow.Blue: return "#2f89ef";
+            case Arrow.Yellow: return "#e4f20e";
+            case Arrow.Purple: return "#dc17dc";
+        }
+        return "black";
+    }
+    private static string colorSvg(WireColor color)
+    {
+        switch (color)
+        {
+            case WireColor.Black: return "#34322D";
+            case WireColor.Blue: return "#2B8DFF";
+            case WireColor.Green: return "#1EE41F";
+            case WireColor.Orange: return "#FFA600";
+            case WireColor.Purple: return "#BB3AFF";
+            case WireColor.Red: return "#FF3A3A";
+            case WireColor.White: return "#E1E1E1";
+            case WireColor.Yellow: return "#DADB35";
+        }
+        return "#f8f";
+    }
     private static string arrowDirStr(Arrow arrow)
     {
         // Workaround because “Up” and “Red” have the same value (0) so .ToString() might stringify it to “Red”
@@ -58,6 +86,17 @@ public class PerplexingWiresModule : MonoBehaviour
         if (dir == Arrow.Up)
             return "Up";
         return dir.ToString();
+    }
+    private static string arrowDirSvg(Arrow arrow)
+    {
+        switch (arrow & Arrow.DirectionMask)
+        {
+            case Arrow.Up: return "0";
+            case Arrow.Right: return "90";
+            case Arrow.Down: return "180";
+            case Arrow.Left: return "270";
+        }
+        return "45";
     }
 
     [Flags] enum WireColor { Red, Yellow, Blue, White, Green, Orange, Purple, Black }
@@ -79,6 +118,17 @@ public class PerplexingWiresModule : MonoBehaviour
         }
         return null;
     }
+    private static string cutRuleSvg(CutRule rule)
+    {
+        switch (rule)
+        {
+            case CutRule.DontCut: return "✗";
+            case CutRule.CutFirst: return "F";
+            case CutRule.CutLast: return "L";
+            case CutRule.Cut: return "✓";
+        }
+        return null;
+    }
 
     sealed class WireInfo
     {
@@ -87,7 +137,8 @@ public class PerplexingWiresModule : MonoBehaviour
         public WireColor Color;
         public int Level;
         public CutRule CutRule;
-        public string Reason;
+        public string[] VennColors;
+        public char Reason;
         public bool HasBeenCut;
         public MeshFilter MeshFilter;
         public MeshFilter HighlightMeshFilter;
@@ -204,7 +255,8 @@ public class PerplexingWiresModule : MonoBehaviour
                 applicable.Add("Blue");
             }
 
-            _wires[i].Reason = string.Format("{0} = {1}", applicable.Count == 0 ? "none" : applicable.JoinString("+"), rules[rule]);
+            _wires[i].VennColors = applicable.ToArray();
+            _wires[i].Reason = rules[rule];
 
             var dir = (_arrows[_wires[i].BottomConnector] & Arrow.DirectionMask);
             switch (rules[rule])
@@ -251,11 +303,11 @@ public class PerplexingWiresModule : MonoBehaviour
         Array.Sort(_wires, (w1, w2) => w1.BottomConnector.CompareTo(w2.BottomConnector));
 
         for (int i = 0; i < StarMeshes.Length; i++)
-            Debug.LogFormat("[Perplexing Wires #{0}] Star #{1} is {2}.", _moduleId, i + 1, _filledStars[i] ? "filled" : "empty");
+            Debug.LogFormat("[Perplexing Wires #{0}] (h) Star #{1} is {2}.", _moduleId, i + 1, _filledStars[i] ? "filled" : "empty");
         for (int i = 0; i < ArrowMeshes.Length; i++)
-            Debug.LogFormat("[Perplexing Wires #{0}] Arrow #{1} is {2} and pointing {3}.", _moduleId, i + 1, arrowColorStr(_arrows[i]), arrowDirStr(_arrows[i]));
+            Debug.LogFormat("[Perplexing Wires #{0}] (h) Arrow #{1} is {2} and pointing {3}.", _moduleId, i + 1, arrowColorStr(_arrows[i]), arrowDirStr(_arrows[i]));
         for (int i = 0; i < LedMeshes.Length; i++)
-            Debug.LogFormat("[Perplexing Wires #{0}] LED #{1} is {2}.", _moduleId, i + 1, _ledsOn[i] ? "on" : "off");
+            Debug.LogFormat("[Perplexing Wires #{0}] (h) LED #{1} is {2}.", _moduleId, i + 1, _ledsOn[i] ? "on" : "off");
 
         //
         // STEP 4: Generate the actual wire meshes. (This also logs the wire states and rules.)
@@ -368,10 +420,77 @@ public class PerplexingWiresModule : MonoBehaviour
             wireObj.GetComponent<MeshCollider>().enabled = true;
             wireObj.GetComponent<MeshCollider>().enabled = false;
 
-            Debug.LogFormat("[Perplexing Wires #{6}] Wire {0} to {1} is {2}: {3} (Venn: {4})", _wires[wIx].TopConnector + 1, _wires[wIx].BottomConnector + 1, _wires[wIx].Color, cutRuleStr(_wires[wIx].CutRule), _wires[wIx].Reason, _wires[wIx].Level, _moduleId);
+            Debug.LogFormat("[Perplexing Wires #{6}] (h) Wire {0} to {1} is {2}: {3} (Venn: {4} = {5})",
+                _wires[wIx].TopConnector + 1,
+                _wires[wIx].BottomConnector + 1,
+                _wires[wIx].Color,
+                cutRuleStr(_wires[wIx].CutRule),
+                _wires[wIx].VennColors.Length == 0 ? "none" : _wires[wIx].VennColors.JoinString("+"),
+                _wires[wIx].Reason,
+                _moduleId);
             _wires[wIx].Selectable = wireObj.GetComponent<KMSelectable>();
             _wires[wIx].Selectable.OnInteract = getWireHandler(wIx);
         }
+
+        // Output the generated SVG to the logfile.
+        var svg = new StringBuilder();
+        var starsCoordsX = new[] { 123.3 - 5, 161 - 5, 198.5 - 5, 236 - 5 };
+        var starsCoordsY = new[] { 36.2, 50, 63.6, 77.2 };
+        var starsConnectorCoordsX = new[] { 115.6 - 5, 153.2 - 5, 190.8 - 5, 228.4 - 5 };
+        var starsConnectorCoordsY = new[] { 69.8, 83.5, 97.2, 111 };
+
+        // Wires
+        for (var i = 0; i < 6; i++)
+        {
+            svg.AppendFormat(
+                "<path d='M{0} 250 {0} 200 {1} {2} {3} {4}' stroke='#543' stroke-linecap='round' stroke-linejoin='round' stroke-width='16'/>" +
+                "<path d='M{0} 250 {0} 200 {1} {2} {3} {4}' stroke='{5}' stroke-linecap='round' stroke-linejoin='round' stroke-width='13'/>" +
+                "<text x='{0}' y='370' text-anchor='middle'>{6}</text>" +
+                "<text x='{0}' y='390' text-anchor='middle' stroke='none' fill='{7}'>{8}</text>",
+                /* {0} */ 40 + 40 * i,
+                /* {1} */ starsConnectorCoordsX[_wires[i].TopConnector],
+                /* {2} */ starsConnectorCoordsY[_wires[i].TopConnector],
+                /* {3} */ starsCoordsX[_wires[i].TopConnector],
+                /* {4} */ starsCoordsY[_wires[i].TopConnector],
+                /* {5} */ colorSvg(_wires[i].Color),
+                /* {6} */ _wires[i].Reason,
+                /* {7} */ _wires[i].CutRule == CutRule.DontCut ? "#a00" : "#080",
+                /* {8} */ cutRuleSvg(_wires[i].CutRule)
+            );
+        }
+
+        // Lettering at the bottom
+        var vennColors = new[] { "#eb1414", "#ffb100", "#ee0", "#00be00", "#09f" };
+        var vennColorNames = new[] { "Red", "Orange", "Yellow", "Green", "Blue" };
+        for (var i = 0; i < 6; i++)
+        {
+            for (var cIx = 0; cIx < _wires[i].VennColors.Length; cIx++)
+            {
+                var c = Array.IndexOf(vennColorNames, _wires[i].VennColors[cIx]);
+                svg.AppendFormat("<rect x='{0}' y='{1}' width='20' height='10' stroke='none' fill='{2}'/>", 30 + 40 * i, 275 + 15 * c, vennColors[c]);
+            }
+        }
+
+        // Frames
+        svg.Append(
+            "<path d='M10 10h50v110H10z'/>" +                                       // LEDs frame
+            "<path d='M95.5 10l169.2 61.7-10.2 28.2L85.3 38.2z' fill='#fff'/>" +    // stars
+            "<path d='M10 230h260v40H10z' fill='#fff'/>");                           // arrows
+
+        // LEDs
+        svg.AppendFormat("<path d='M35 22  l8.7 4   2.2 9.6-6 7.6H30l-6-7.6 2-9.5z' fill='{0}'/>", _ledsOn[0] ? "lime" : "#234");
+        svg.AppendFormat("<path d='M35 54.5l8.7 4   2.2 9.5-6 7.7H30L24 68l2-9.4z'  fill='{0}'/>", _ledsOn[1] ? "lime" : "#234");
+        svg.AppendFormat("<path d='M35 86.8l8.7 4.3 2.2 9.5-6 7.5H30l-6-7.5 2-9.7z' fill='{0}'/>", _ledsOn[2] ? "lime" : "#234");
+
+        // Stars
+        for (var i = 0; i < 4; i++)
+            svg.AppendFormat("<path transform='translate({0}, {1}) rotate(20)' d='M0-10l2.2 7h7.3l-6 4.2 2.4 7-6-4.4-6 4.3 2.4-6.8-6-4.3H-2z' fill='{2}'/>", starsCoordsX[i], starsCoordsY[i], _filledStars[i] ? "black" : "white");
+
+        // Arrows
+        for (var i = 0; i < 6; i++)
+            svg.AppendFormat("<path transform='translate({0}, 250) rotate({1})' d='M0-15L11 0H5.7v15H-5.7v-15H-11z' fill='{2}'/>", 40 + 40 * i, arrowDirSvg(_arrows[i]), colorSvg(_arrows[i]));
+
+        Debug.LogFormat("[Perplexing Wires #{0}]=svg[Module:]<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 462 400' fill='none' stroke='#000' stroke-width='2' font-family='Trebuchet MS'>{1}</svg>", _moduleId, svg.ToString());
 
         // Finally, get rid of the extra Wire objects that only exist to hold the colored materials.
         var dwIx = _wires.Length;
