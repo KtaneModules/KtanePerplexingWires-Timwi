@@ -552,7 +552,7 @@ public class PerplexingWiresModule : MonoBehaviour
     }
 
 #pragma warning disable 414
-    private string TwitchHelpMessage = "Cut the wires with “!{0} cut 2 3 1”. The wires are numbered according to their connection on the bottom.";
+    private readonly string TwitchHelpMessage = "Cut the wires with “!{0} cut 2 3 1”. The wires are numbered according to their connection on the bottom.";
 #pragma warning restore 414
 
     private KMSelectable[] ProcessTwitchCommand(string command)
@@ -569,5 +569,16 @@ public class PerplexingWiresModule : MonoBehaviour
             wires.Add(_wires[result - 1].Selectable);
         }
         return wires.ToArray();
+    }
+
+    IEnumerator TwitchHandleForcedSolve()
+    {
+        foreach (var rule in new[] { CutRule.CutFirst, CutRule.Cut, CutRule.CutLast })
+            foreach (var wireInfo in _wires)
+                if (wireInfo.CutRule == rule)
+                {
+                    wireInfo.Selectable.OnInteract();
+                    yield return new WaitForSeconds(.1f);
+                }
     }
 }
