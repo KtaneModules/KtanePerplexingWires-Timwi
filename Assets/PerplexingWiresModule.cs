@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using PerplexingWires;
 using UnityEngine;
 
@@ -27,6 +28,10 @@ public class PerplexingWiresModule : MonoBehaviour
     public MeshRenderer[] ArrowMeshes;
     public MeshRenderer[] StarMeshes;
     public MeshRenderer[] LedMeshes;
+
+    public TextMesh[] WireCB;
+    public TextMesh[] ArrowCB;
+    public KMColorblindMode ColorblindMode;
 
     [Flags]
     enum Arrow
@@ -147,7 +152,7 @@ public class PerplexingWiresModule : MonoBehaviour
         public Mesh CutHighlightMesh;
         public Mesh CopperMesh;
     }
-    private WireInfo[] _wires = new WireInfo[6];
+    private readonly WireInfo[] _wires = new WireInfo[6];
 
     private static int _moduleIdCounter = 1;
     private int _moduleId;
@@ -160,7 +165,7 @@ public class PerplexingWiresModule : MonoBehaviour
 
     private IEnumerator Initialize()
     {
-        yield return new WaitForSeconds(Rnd.Range(.01f, .1f));
+        yield return null;
 
         var retries = 0;
         retry:
@@ -173,6 +178,7 @@ public class PerplexingWiresModule : MonoBehaviour
         {
             _arrows[i] = (Arrow) ((Rnd.Range(0, 4) << 0) | (Rnd.Range(0, 5) << 2));
             ArrowMeshes[i].material.mainTexture = Arrows[(int) _arrows[i]];
+            ArrowCB[i].text = "RGBYP".Substring((int) (_arrows[i] & Arrow.ColorMask) >> 2, 1);
         }
 
         _filledStars = new bool[StarMeshes.Length];
@@ -203,6 +209,7 @@ public class PerplexingWiresModule : MonoBehaviour
                 Level = 1,
                 HasBeenCut = false
             };
+            WireCB[_wires[i].BottomConnector].text = "RYBWGOPK".Substring((int) _wires[i].Color, 1);
             for (int j = 0; j < i; j++)
                 if ((_wires[j].TopConnector > _wires[i].TopConnector && _wires[j].BottomConnector < _wires[i].BottomConnector) ||
                     (_wires[j].TopConnector < _wires[i].TopConnector && _wires[j].BottomConnector > _wires[i].BottomConnector))
@@ -509,6 +516,15 @@ public class PerplexingWiresModule : MonoBehaviour
 
         MainSelectable.Children = _wires.Select(w => w.Selectable).ToArray();
         MainSelectable.UpdateChildren();
+
+        if (ColorblindMode.ColorblindModeActive)
+            ActivateColorblindMode();
+    }
+
+    private void ActivateColorblindMode()
+    {
+        foreach (var obj in ArrowCB.Concat(WireCB))
+            obj.gameObject.SetActive(true);
     }
 
     private KMSelectable.OnInteractHandler getWireHandler(int ix)
@@ -552,11 +568,17 @@ public class PerplexingWiresModule : MonoBehaviour
     }
 
 #pragma warning disable 414
-    private readonly string TwitchHelpMessage = "Cut the wires with “!{0} cut 2 3 1”. The wires are numbered according to their connection on the bottom.";
+    private readonly string TwitchHelpMessage = "!{0} cut 2 3 1 [the wires are numbered according to their connection on the bottom] | !{0} colorblind";
 #pragma warning restore 414
 
     private KMSelectable[] ProcessTwitchCommand(string command)
     {
+        if (Regex.IsMatch(command, @"^\s*(cb|colorblind)\s*$", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase))
+        {
+            ActivateColorblindMode();
+            return new KMSelectable[0];
+        }
+
         var split = command.ToLowerInvariant().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
         if (split.Length < 2 || split[0] != "cut")
             return null;

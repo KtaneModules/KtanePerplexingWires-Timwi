@@ -13,15 +13,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: PerplexingWires
   title: Perplexing Wires
+  author: 
   description: 'Complicated Wires wasn''t complicated enough.
 
 
-    Module created by Zeke, Timwi and MarAyzex.
+    Module created by Timwi, Quinn Wuest and MarAyzex.
 
 
-    [url=http://ktane.timwi.de/PDF/Perplexing%20Wires.pdf]Manual PDF[/url]
+    [url=http://ktane.timwi.de/PDF/Perplexing%20Wires.pdf]Manual PDF in color[/url]
+    / [url=https://ktane.timwi.de/PDF/Perplexing%20Wires%20black%20&%20white%20(EpicToast).pdf]black
+    & white[/url]
 
-    [url=http://ktane.timwi.de/HTML/Perplexing%20Wires.html]Manual HTML[/url]'
+    [url=http://ktane.timwi.de/HTML/Perplexing%20Wires.html]Manual HTML in color[/url]
+    / [url=https://ktane.timwi.de/HTML/Perplexing%20Wires%20black%20%26%20white%20(EpicToast).html]black
+    & white[/url]'
   version: 1.0
   outputFolder: build
   previewImage: {fileID: 2800000, guid: bd5c1f4881f57d54481b44e4c8a7779a, type: 3}
