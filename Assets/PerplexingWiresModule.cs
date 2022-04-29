@@ -33,6 +33,8 @@ public class PerplexingWiresModule : MonoBehaviour
     public TextMesh[] ArrowCB;
     public KMColorblindMode ColorblindMode;
 
+    private bool _colorblind;
+
     [Flags]
     enum Arrow
     {
@@ -517,14 +519,16 @@ public class PerplexingWiresModule : MonoBehaviour
         MainSelectable.Children = _wires.Select(w => w.Selectable).ToArray();
         MainSelectable.UpdateChildren();
 
-        if (ColorblindMode.ColorblindModeActive)
-            ActivateColorblindMode();
+        _colorblind = ColorblindMode.ColorblindModeActive;
+        SetColorblindMode();
     }
 
-    private void ActivateColorblindMode()
+    private void SetColorblindMode()
     {
-        foreach (var obj in ArrowCB.Concat(WireCB))
-            obj.gameObject.SetActive(true);
+        foreach (var obj in ArrowCB)
+            obj.gameObject.SetActive(_colorblind);
+        foreach (var obj in WireCB)
+            obj.gameObject.SetActive(_colorblind);
     }
 
     private KMSelectable.OnInteractHandler getWireHandler(int ix)
@@ -575,7 +579,8 @@ public class PerplexingWiresModule : MonoBehaviour
     {
         if (Regex.IsMatch(command, @"^\s*(cb|colorblind)\s*$", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase))
         {
-            ActivateColorblindMode();
+            _colorblind = !_colorblind;
+            SetColorblindMode();
             return new KMSelectable[0];
         }
 
